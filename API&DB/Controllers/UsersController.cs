@@ -1,4 +1,5 @@
 ﻿using API_DB.Models;
+using API_DB.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_DB.Controllers
@@ -7,56 +8,68 @@ namespace API_DB.Controllers
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
     {
-        private static List<Users> AllUsers = new List<Users>
-        {
-            new Users { Id = 1, UserName = "Nasirul", Password = "12345" },
-            new Users { Id = 2, UserName = "Naim", Password = "12345" },
-            new Users { Id = 3, UserName = "Admin", Password = "1111" },
-            new Users { Id = 4, UserName = "Admin2", Password = "2222" },
-            new Users { Id = 5, UserName = "Admin3", Password = "3333" }
-        }; 
+        //private static List<Users> AllUsers = new List<Users>
+        //{
+        //    new Users { Id = 1, UserName = "Nasirul", Password = "12345" },
+        //    new Users { Id = 2, UserName = "Naim", Password = "12345" },
+        //    new Users { Id = 3, UserName = "Admin", Password = "1111" },
+        //    new Users { Id = 4, UserName = "Admin2", Password = "2222" },
+        //    new Users { Id = 5, UserName = "Admin3", Password = "3333" }
+        //}; 
+        private readonly UsersService _userService;
 
+        public UsersController(UsersService usersService)
+        {
+            _userService = usersService;
+        }
+
+
+        // GET: api/users
         [HttpGet]
         public IActionResult GetUsers()
         {
-            return Ok(AllUsers);
+            var users = _userService.GetAllUsers();
+            return Ok(users);
         }
 
+        // GET: api/users/{id}
         [HttpGet("{id}")]
         public IActionResult GetUserById(int id)
         {
-            var user = AllUsers.FirstOrDefault(u => u.Id == id);
-            if (user == null)
-                return NotFound();
+            var user = _userService.GetUserById(id);
+            if (user == null) return NotFound();
             return Ok(user);
         }
 
+        // POST: api/users
         [HttpPost]
         public IActionResult CreateUser(Users user)
         {
-            user.Id = AllUsers.Count + 1;
-            AllUsers.Add(user);
-            return CreatedAtAction(nameof(Users), new { id = user.Id }, user);
+            _userService.CreateUser(user);
+            return CreatedAtAction(nameof(GetUserById), new { id = user.ID }, user);
         }
 
+        // PUT: api/users/{id}
         [HttpPut("{id}")]
-        public IActionResult UpdateUserInfo(int id, Users updateUser)
+        public IActionResult UpdateUser(int id, Users user)
         {
-            var user = AllUsers.FirstOrDefault(u => u.Id == id);
-            if (user == null) return NotFound();
-            user.UserName = updateUser.UserName;
-            user.Password = updateUser.Password;
-            //return NoContent(); 
-            return Ok(user);
+            var existingUser = _userService.GetUserById(id);
+            if (existingUser == null) return NotFound();
+
+            user.ID = id;
+            _userService.UpdateUser(user);
+            return NoContent();
         }
 
+        // DELETE: api/users/{id}
         [HttpDelete("{id}")]
         public IActionResult DeleteUser(int id)
         {
-            var user = AllUsers.FirstOrDefault(user => user.Id == id);
-            if (user == null) return NotFound();
-            AllUsers.Remove(user);
-            return Ok(id);
+            var existingUser = _userService.GetUserById(id);
+            if (existingUser == null) return NotFound();
+
+            _userService.DeleteUser(id);
+            return NoContent();
         }
 
         /*
